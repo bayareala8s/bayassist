@@ -67,7 +67,6 @@ def build_arc_presentation(topology: dict, job_id: str) -> bytes:
 def lambda_handler(event, context):
   job_id = event["job_id"]
   topology = event["topology"]
-
   ppt_bytes = build_arc_presentation(topology, job_id)
 
   ppt_key = f"outputs/{job_id}/arc-review.pptx"

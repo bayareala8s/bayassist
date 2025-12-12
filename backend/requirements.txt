@@ -1,4 +1,4 @@
 markdown
-xhtml2pdf
-python-pptx
 markdown2
+python-pptx
+fpdf2

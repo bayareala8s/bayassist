@@ -1,8 +1,7 @@
 import os
 import boto3
 from io import BytesIO
-from markdown import markdown
-from xhtml2pdf import pisa
+from fpdf import FPDF
 from common.models import now_iso
 
 dynamodb = boto3.resource("dynamodb")
@@ -15,29 +14,38 @@ jobs_table = dynamodb.Table(JOBS_TABLE)
 
 
 def md_to_pdf_bytes(md_text: str) -> bytes:
-  html_body = markdown(md_text, extensions=["tables", "fenced_code"])
-  html = f"""<html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      body {{ font-family: Arial, sans-serif; font-size: 11pt; }}
-      h1, h2, h3 {{ color: #0050EF; }}
-      code {{ font-family: 'Courier New', monospace; font-size: 9pt; }}
-      pre {{ background-color: #f4f4f4; padding: 8px; border-radius: 4px; }}
-      table, th, td {{ border: 1px solid #ccc; border-collapse: collapse; padding: 4px; }}
-    </style>
-  </head>
-  <body>
-    {html_body}
-  </body>
-</html>
-"""
+  """Generate a simple, robust PDF from Markdown using pure Python (fpdf2).
 
-  pdf_io = BytesIO()
-  pisa_status = pisa.CreatePDF(html, dest=pdf_io)
-  if pisa_status.err:
-    raise Exception("PDF generation failed")
-  return pdf_io.getvalue()
+  To avoid width issues in Lambda, we:
+    - Render raw markdown lines (no HTML conversion).
+    - Hard-wrap very long lines to a safe length.
+  """
+
+  pdf = FPDF()
+  pdf.set_auto_page_break(auto=True, margin=15)
+  pdf.add_page()
+  pdf.set_font("Arial", size=11)
+
+  max_line_len = 80
+  max_lines = 200
+
+  for i, raw_line in enumerate(md_text.splitlines()):
+    if i >= max_lines:
+      pdf.cell(0, 6, txt="...", ln=1)
+      break
+
+    line = raw_line.replace("\t", "  ")
+    # Hard-wrap very long tokens to avoid FPDF width errors
+    while line:
+      chunk = line[:max_line_len]
+      line = line[max_line_len:]
+      try:
+        pdf.cell(0, 6, txt=chunk, ln=1)
+      except Exception:
+        # If a pathological line still breaks, skip the remainder
+        break
+
+  return pdf.output(dest="S").encode("latin-1")
 
 
 def lambda_handler(event, context):
@@ -46,7 +54,6 @@ def lambda_handler(event, context):
 
   obj = s3.get_object(Bucket=OUTPUT_BUCKET, Key=doc_s3_key)
   md_text = obj["Body"].read().decode("utf-8")
-
   pdf_bytes = md_to_pdf_bytes(md_text)
 
   pdf_key = f"outputs/{job_id}/architecture.pdf"

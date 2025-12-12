@@ -30,40 +30,61 @@ export const UploadForm: React.FC<Props> = ({ onJobCreated }) => {
 
   return (
     <div className="card">
-      <h2>Upload Terraform / Code</h2>
+      <div className="card-header">
+        <h2 className="card-title">Upload Terraform or Blueprint</h2>
+        <span className="card-caption">Step 1 · Input</span>
+      </div>
+      <p className="card-support-text">
+        Drop a single <code>.tf</code> file or a small <code>.zip</code> of Terraform to generate a full
+        architecture view.
+      </p>
       <form onSubmit={handleSubmit}>
-        <div>
+        <div style={{ marginTop: "0.9rem" }}>
           <input
+            className="input-file"
             type="file"
             accept=".tf,.zip,.json,.yaml,.yml"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
         </div>
-        <div style={{ marginTop: "0.5rem" }}>
-          <label>
+        <div className="radio-row">
+          <label className="radio-pill">
             <input
               type="radio"
               value="diagrams"
               checked={jobType === "diagrams"}
               onChange={() => setJobType("diagrams")}
             />
-            {" "}Generate Diagrams + Doc
+            Generate diagrams + doc
           </label>
-          <label style={{ marginLeft: "1rem" }}>
+          <label className="radio-pill">
             <input
               type="radio"
               value="document"
               checked={jobType === "document"}
               onChange={() => setJobType("document")}
             />
-            {" "}Document Only
+            Document only
           </label>
         </div>
-        <button type="submit" disabled={!file || loading} style={{ marginTop: "0.5rem" }}>
-          {loading ? "Submitting..." : "Generate"}
+        <p className="helper-text">
+          Recommended for demos: <strong>Generate diagrams + doc</strong> to produce Mermaid, Markdown, PDF, ARC PPT
+          and Confluence HTML.
+        </p>
+        <button
+          type="submit"
+          disabled={!file || loading}
+          className="button-primary"
+          style={{ marginTop: "0.5rem" }}
+        >
+          {loading ? "Submitting job…" : "Generate architecture assets"}
         </button>
       </form>
-      {message && <p>{message}</p>}
+      {message && (
+        <p className={`status-message ${message.toLowerCase().includes("error") ? "error" : "success"}`}>
+          {message}
+        </p>
+      )}
     </div>
   );
 };

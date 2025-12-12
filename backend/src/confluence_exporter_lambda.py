@@ -36,7 +36,6 @@ def lambda_handler(event, context):
 
   obj = s3.get_object(Bucket=OUTPUT_BUCKET, Key=doc_s3_key)
   md_text = obj["Body"].read().decode("utf-8")
-
   html = md_to_confluence_html(md_text)
 
   html_key = f"outputs/{job_id}/architecture-confluence.html"
