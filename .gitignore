@@ -1,0 +1,6 @@
+.terraform/
+.venv/
+backend/.venv_layer/
+node_modules/
+frontend/dist/
+__pycache__/
